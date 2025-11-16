@@ -1,39 +1,44 @@
 name: "Auto Docs Agent"
-description: "Automatically rewrites documentation based on code diffs using multiple LLM providers."
+description: "Automatically updates documentation based on code changes using LLMs"
 author: "vjCodeMaze"
 branding:
-  icon: "book-open"
+  icon: "book"
   color: "blue"
 
 inputs:
-  llm_api_key:
-    description: "API key for LLM provider (OpenAI, Gemini, Groq, Anthropic, xAI)"
-    required: true
-
-  llm_model:
-    description: "Model name (gpt-4o-mini, gemini-1.5-flash, llama3-70b, claude-3-sonnet, etc.)"
+  base-branch:
+    description: "Branch to compare changes against"
+    required: false
+    default: "main"
+  docs-path:
+    description: "Path to documentation folder"
+    required: false
+    default: "docs"
+  llm-model:
+    description: "Model to use (gpt-4o, gemini-1.5-flash, claude, groq)"
     required: false
     default: "gpt-4o-mini"
 
 runs:
   using: "composite"
+
   steps:
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v4
       with:
-        python-version: "3.10"
+        python-version: "3.11"
 
     - name: Install dependencies
-  run: pip install -r ${{ github.action_path }}/requirements.txt
-  shell: bash
+      run: pip install -r ${{ github.action_path }}/requirements.txt
+      shell: bash
 
-    - name: Run auto-doc engine
-      env:
-        LLM_API_KEY: ${{ inputs.llm_api_key }}
+    - name: Run Auto Docs Agent
       run: |
         python ${{ github.action_path }}/backend.py \
-          --base-branch main \
-          --docs-path docs \
-          --output /tmp/auto_docs_result.json \
-          --llm-model "${{ inputs.llm_model }}"
+          --base-branch "${{ inputs.base-branch }}" \
+          --docs-path "${{ inputs.docs-path }}" \
+          --llm-model "${{ inputs.llm-model }}" \
+          --output auto_docs_output.json
       shell: bash
+      env:
+        LLM_API_KEY: ${{ env.LLM_API_KEY }}
